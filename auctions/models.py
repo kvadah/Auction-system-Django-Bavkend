@@ -8,7 +8,7 @@ class AuctionItem(models.Model):
     description = models.TextField()
     starting_price= models.DecimalField(max_digits=10,decimal_places=2)
     current_price= models.DecimalField(max_digits=10,decimal_places=2)
-    image =models.URLField()
+    image =models.ImageField(upload_to='auction_images/')
     is_active = models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     ends_at=models.DateTimeField()
