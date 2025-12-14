@@ -4,8 +4,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .models import AuctionItem, Bid
-from .serializers import AuctionItemSerializer, BidSerializer
+from .serializers import AuctionItemSerializer, BidSerializer,HotAuctionSerializer
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.db.models import Count
+from datetime import timedelta
+
 
 class CreateAuctionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,14 +17,16 @@ class CreateAuctionView(APIView):
     def post(self, request):
         serializer = AuctionItemSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(owner=request.user, current_price=serializer.validated_data['starting_price'])
+            serializer.save(
+                owner=request.user, current_price=serializer.validated_data['starting_price'])
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=400)
 
 
 class ListAuctionsView(APIView):
     def get(self, request):
-        items = AuctionItem.objects.filter(is_active=True).order_by('-created_at')
+        items = AuctionItem.objects.filter(
+            is_active=True).order_by('-created_at')
         serializer = AuctionItemSerializer(items, many=True)
         return Response(serializer.data)
 
@@ -64,3 +70,14 @@ class PlaceBidView(APIView):
 
         serializer = BidSerializer(bid)
         return Response(serializer.data, status=201)
+
+
+class HotAuctions(APIView):
+    def get(self,request):
+        last_24_hours = timezone.now()-timedelta(hours=24)
+        hotAuctions = (AuctionItem.objects.
+                    filter(bids__created_at__gte=last_24_hours).
+                    annotate(last_24h_bids=Count('bids')).
+                    order_by('-last_24h_bids')[:5])
+        serializer =HotAuctionSerializer(hotAuctions,many=True)
+        return Response(serializer.data)

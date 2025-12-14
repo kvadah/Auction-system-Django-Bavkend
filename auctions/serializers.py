@@ -21,3 +21,10 @@ class AuctionItemSerializer(serializers.ModelSerializer):
             'current_price', 'image', 'is_active', 'created_at', 'ends_at', 'bids'
         ]
         read_only_fields = ['id', 'owner', 'current_price', 'created_at', 'is_active']
+
+
+class HotAuctionSerializer(serializers.Serializer):
+    id=serializers.IntegerField()
+    title=serializers.CharField()
+    last_24h_bids =serializers.IntegerField()
+    image=serializers.ImageField()
