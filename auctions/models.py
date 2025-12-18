@@ -26,3 +26,10 @@ class Bid(models.Model):
     def __str__(self):
         return f"{self.bidder.username} - {self.amount}"
 
+class SavedAuctions(models.Model):
+    auction = models.ForeignKey(AuctionItem,on_delete=models.CASCADE,related_name='saved_by')
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='saved_auctions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together =("user","auction")

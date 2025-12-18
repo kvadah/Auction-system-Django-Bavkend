@@ -28,3 +28,8 @@ class HotAuctionSerializer(serializers.Serializer):
     title=serializers.CharField()
     last_24h_bids =serializers.IntegerField()
     image=serializers.ImageField()
+
+
+class SaveAuctionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = "__all__"

@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import AuctionItem, Bid
+from .models import AuctionItem, Bid,SavedAuctions
 from .serializers import AuctionItemSerializer, BidSerializer,HotAuctionSerializer
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -81,3 +81,51 @@ class HotAuctions(APIView):
                     order_by('-last_24h_bids')[:5])
         serializer =HotAuctionSerializer(hotAuctions,many=True)
         return Response(serializer.data)
+
+class Stats(APIView):
+    def get(self,request):
+        last_24_hours=timezone.now()-timedelta(hours=24)
+
+        last_24h_bids=Bid.objects.filter(created_at__gte=last_24_hours).count()
+        last_24h_auctions=AuctionItem.objects.filter(created_at__gte=last_24_hours).count()
+        total_active_auctions=AuctionItem.objects.filter(ends_at__gt=timezone.now()).count()
+        return Response({
+            "stats":{
+                "last_24h_bids":last_24h_bids,
+                "last_24h_auctions":last_24h_auctions,
+                "total_active_auctions":total_active_auctions,
+            }
+        })
+    
+
+class SaveAuctionsView(APIView):
+    permission_classes =[IsAuthenticated]
+
+    def post(self,request,auction_id):
+        auction= get_object_or_404(AuctionItem,id=auction_id)
+
+        saved,created = SavedAuctions.objects.get_or_create(
+            auction=auction,
+            user=request.user
+        )
+        if not created:
+            return Response ({"auction already saved"})
+        
+        return Response({"auction saved"})
+    def delete(self,request,auction_id):
+        auction = get_object_or_404(AuctionItem,auction_id)
+
+        SavedAuctions.onjects.filter(
+            user=request.user,
+            auction=auction
+        ).delete()
+
+
+class SavedAuctionsLisView(APIView):
+    permission_classes =[IsAuthenticated]
+
+    def get(self,request):
+        saved_auctions = SavedAuctions.objects.filter(user=request.user)
+        auctions = [item.auction for item in saved_auctions]
+        serialzer = AuctionItemSerializer(auctions,many=True)
+        return Response(serialzer.data)
