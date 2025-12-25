@@ -20,9 +20,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        validated_data["password"] = make_password(validated_data["password"])
-        return super(RegisterSerializer, self).create(validated_data)
+        user=User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            is_active= False
 
+        )
+        return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
