@@ -26,7 +26,7 @@ class CreateAuctionView(APIView):
 class ListAuctionsView(APIView):
     def get(self, request):
         items = AuctionItem.objects.filter(
-            is_active=True).order_by('-created_at')
+            ends_at__gt=timezone.now()).order_by('-created_at')
         serializer = AuctionItemSerializer(items, many=True)
         return Response(serializer.data)
 
@@ -115,7 +115,7 @@ class SaveAuctionsView(APIView):
     def delete(self,request,auction_id):
         auction = get_object_or_404(AuctionItem,auction_id)
 
-        SavedAuctions.onjects.filter(
+        SavedAuctions.objects.filter(
             user=request.user,
             auction=auction
         ).delete()
