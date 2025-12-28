@@ -72,6 +72,7 @@ CHANNEL_LAYERS ={
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -86,6 +87,26 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "accept",
+    "origin",
+    "user-agent",
+    "dnt",
+    "cache-control",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
 
 ROOT_URLCONF = 'auction_backend.urls'
 
