@@ -15,7 +15,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()  # <--- IMPORTANT
 from decouple import config
-
+import dj_database_url
 import environ
 from pathlib import Path
 
@@ -31,6 +31,8 @@ environ.Env.read_env(BASE_DIR / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Quick-start development settings - unsuitable for production
@@ -71,6 +73,7 @@ CHANNEL_LAYERS ={
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -106,20 +109,26 @@ WSGI_APPLICATION = 'auction_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+#postgresql://auctionbackend_user:McxVVOFsdN5N0RyPbe4gDZYF2HxIRYhy@dpg-d58dn06r433s73f76f90-a.oregon-postgres.render.com/auctionbackend
+#DATABASES = {
+ #   'default': {
+  #      'ENGINE': config('DB_ENGINE'),
+   #     'NAME': config('DB_NAME'),
+    #    'USER': config('DB_USER'),
+     #   'PASSWORD': config('DB_PASSWORD'),
+      #  'HOST': config('DB_HOST'),
+       # 'PORT': config('DB_PORT'),
+        #'OPTIONS': {
+         ##   'sslmode': config('DB_SSLMODE'),
+ #       },
+  #  }
+#}
 DATABASES = {
-    'default': {
-        'ENGINE': config('DB_ENGINE'),
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-        'OPTIONS': {
-            'sslmode': config('DB_SSLMODE'),
-        },
-    }
+    "default": dj_database_url.parse(
+        os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
+    )
 }
+
 
 
 
