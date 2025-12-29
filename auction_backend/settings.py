@@ -98,6 +98,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -145,9 +146,10 @@ WSGI_APPLICATION = 'auction_backend.wsgi.application'
   #  }
 #}
 DATABASES = {
-    "default": dj_database_url.parse(
-        os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
