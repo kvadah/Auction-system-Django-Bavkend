@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import AuctionItem, Bid,SavedAuctions
-from .serializers import AuctionItemSerializer, BidSerializer,HotAuctionSerializer
+from .models import AuctionItem, Bid, SavedAuctions
+from .serializers import AuctionItemSerializer, BidSerializer, HotAuctionSerializer
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Count
@@ -73,47 +73,52 @@ class PlaceBidView(APIView):
 
 
 class HotAuctions(APIView):
-    def get(self,request):
+    def get(self, request):
         last_24_hours = timezone.now()-timedelta(hours=24)
         hotAuctions = (AuctionItem.objects.
-                    filter(bids__created_at__gte=last_24_hours).
-                    annotate(last_24h_bids=Count('bids')).
-                    order_by('-last_24h_bids')[:5])
-        serializer =HotAuctionSerializer(hotAuctions,many=True)
+                       filter(bids__created_at__gte=last_24_hours).
+                       annotate(last_24h_bids=Count('bids')).
+                       order_by('-last_24h_bids')[:5])
+        serializer = HotAuctionSerializer(hotAuctions, many=True)
         return Response(serializer.data)
 
-class Stats(APIView):
-    def get(self,request):
-        last_24_hours=timezone.now()-timedelta(hours=24)
 
-        last_24h_bids=Bid.objects.filter(created_at__gte=last_24_hours).count()
-        last_24h_auctions=AuctionItem.objects.filter(created_at__gte=last_24_hours).count()
-        total_active_auctions=AuctionItem.objects.filter(ends_at__gt=timezone.now()).count()
+class Stats(APIView):
+    def get(self, request):
+        last_24_hours = timezone.now()-timedelta(hours=24)
+
+        last_24h_bids = Bid.objects.filter(
+            created_at__gte=last_24_hours).count()
+        last_24h_auctions = AuctionItem.objects.filter(
+            created_at__gte=last_24_hours).count()
+        total_active_auctions = AuctionItem.objects.filter(
+            ends_at__gt=timezone.now()).count()
         return Response({
-            "stats":{
-                "last_24h_bids":last_24h_bids,
-                "last_24h_auctions":last_24h_auctions,
-                "total_active_auctions":total_active_auctions,
+            "stats": {
+                "last_24h_bids": last_24h_bids,
+                "last_24h_auctions": last_24h_auctions,
+                "total_active_auctions": total_active_auctions,
             }
         })
-    
+
 
 class SaveAuctionsView(APIView):
-    permission_classes =[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-    def post(self,request,auction_id):
-        auction= get_object_or_404(AuctionItem,id=auction_id)
+    def post(self, request, auction_id):
+        auction = get_object_or_404(AuctionItem, id=auction_id)
 
-        saved,created = SavedAuctions.objects.get_or_create(
+        saved, created = SavedAuctions.objects.get_or_create(
             auction=auction,
             user=request.user
         )
         if not created:
-            return Response ({"auction already saved"})
-        
+            return Response({"auction already saved"})
+
         return Response({"auction saved"})
-    def delete(self,request,auction_id):
-        auction = get_object_or_404(AuctionItem,auction_id)
+
+    def delete(self, request, auction_id):
+        auction = get_object_or_404(AuctionItem, auction_id)
 
         SavedAuctions.objects.filter(
             user=request.user,
@@ -122,10 +127,30 @@ class SaveAuctionsView(APIView):
 
 
 class SavedAuctionsLisView(APIView):
-    permission_classes =[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-    def get(self,request):
+    def get(self, request):
         saved_auctions = SavedAuctions.objects.filter(user=request.user)
         auctions = [item.auction for item in saved_auctions]
-        serialzer = AuctionItemSerializer(auctions,many=True)
+        serialzer = AuctionItemSerializer(auctions, many=True)
         return Response(serialzer.data)
+
+
+class DeleteAuction(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, auction_id):
+        auction = get_object_or_404(AuctionItem, id=auction_id)
+        if request.user != auction.owner:
+            return Response({'you do not have permission to delete this auction'}, status=status.HTTP_403_FORBIDDEN)
+        auction.delete()
+        return Response({' auction deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class MyAuctions(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        auctions = AuctionItem.objects.filter(owner=request.user)
+        serializer = AuctionItemSerializer(auctions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
